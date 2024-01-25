@@ -2,52 +2,45 @@ import { useCallback, useEffect, useState } from "react";
 import Cell from "./Cell";
 import useKeyPress from "../hooks/useKeyPress";
 
-export type CellType = "empty" | "player" | "wall" | "bomb";
+export type CellType = {
+    status: "empty" | "player" | "hardWall" | "softWall";
+    hasBomb: boolean;
+};
 
 const Matrix = () => {
     const size = 11;
     const speed = 200;
-    const [initMatrix, setInitMatrix] = useState<CellType[][]>([]);
     const [matrix, setMatrix] = useState<CellType[][]>([]);
     const [playerPos, setPlayerPos] = useState([0, 0]);
     const [init, setInit] = useState(true);
 
-    const updateMatrix = useCallback(
-        (rowNumber: number, colNumber: number) => {
-            const newMatrix = [...initMatrix];
-            const targetRow = [...newMatrix[rowNumber]];
-            targetRow[colNumber] = "player";
-            newMatrix[rowNumber] = targetRow;
-            return newMatrix;
-        },
-        [initMatrix]
-    );
+    // const movePlayer = useCallback((matrix: CellType[][], rowNumber: number, colNumber: number) => {
+    //     const newMatrix = [...matrix];
+    //     const targetRow = [...newMatrix[rowNumber]];
+    //     targetRow[colNumber] = "player";
+    //     newMatrix[rowNumber] = targetRow;
+    //     return newMatrix;
+    // }, []);
 
-    const generateWalls = useCallback((matrix: CellType[][]) => {
+    const updateMatrix = useCallback(({ matrix, playerPosition, hasBomb = false }: { matrix: CellType[][]; playerPosition: number[]; hasBomb?: boolean }) => {
         return matrix.map((row: CellType[], rowIndex: number) => {
-            if (rowIndex % 2 === 1) {
-                return row.map((cell: CellType, cellIndex: number) => {
-                    if (cellIndex % 2 === 1) return "wall";
-                    else return cell;
-                });
-            } else return row;
-        });
+            return row.map((cell: CellType, cellIndex: number) => {
+                if (rowIndex === playerPosition[0] && cellIndex === playerPosition[1]) return { ...cell, status: "player", hasBomb };
+                if ((rowIndex === 0 && (cellIndex === 0 || cellIndex === 1)) || (rowIndex === 1 && cellIndex === 0)) return { ...cell, status: "empty" };
+                if (rowIndex % 2 === 1 && cellIndex % 2 === 1) return { ...cell, status: "hardWall" };
+                // else if (cell === "player") return "empty";
+                else return { ...cell, status: "softWall" };
+            });
+        }) as CellType[][];
     }, []);
 
     useEffect(() => {
         if (init) {
-            const withWalls = generateWalls(Array(size).fill(Array(size).fill("empty")));
-            setInitMatrix(withWalls);
+            const withWalls = updateMatrix({ matrix: Array(size).fill(Array(size).fill({ status: "softWall", hasBomb: false })), playerPosition: [0, 0] });
+            setMatrix(withWalls);
             setInit(false);
         }
-    }, [init, generateWalls]);
-
-    useEffect(() => {
-        if (initMatrix.length > 0) {
-            const newMatrix = updateMatrix(playerPos[0], playerPos[1]);
-            setMatrix(newMatrix);
-        }
-    }, [initMatrix, updateMatrix, playerPos]);
+    }, [init, updateMatrix]);
 
     const arrowUp = useKeyPress("ArrowUp");
     const arrowDown = useKeyPress("ArrowDown");
@@ -56,32 +49,37 @@ const Matrix = () => {
     const spaceBar = useKeyPress(" ");
 
     useEffect(() => {
-        if (spaceBar) console.log("spaceBar");
-    }, [spaceBar]);
+        if (spaceBar && !matrix[playerPos[0]][playerPos[1]].hasBomb) {
+            const newMatrix = updateMatrix({ matrix, playerPosition: playerPos, hasBomb: true });
+            setMatrix(newMatrix);
+        }
+    }, [spaceBar, updateMatrix, playerPos, matrix]);
+
+    const isWall = (cell: CellType) => cell.status === "hardWall" || cell.status === "softWall";
 
     useEffect(() => {
         const timeoutDown = setTimeout(() => {
-            const nextRowPos = playerPos[0] + 1 < size - 1 ? (matrix[playerPos[0] + 1][playerPos[1]] === "wall" ? playerPos[0] : playerPos[0] + 1) : size - 1;
+            const nextRowPos = playerPos[0] + 1 < size - 1 ? (isWall(matrix[playerPos[0] + 1][playerPos[1]]) ? playerPos[0] : playerPos[0] + 1) : size - 1;
             setPlayerPos([nextRowPos, playerPos[1]]);
-            const newMatrix = updateMatrix(nextRowPos, playerPos[1]);
+            const newMatrix = updateMatrix({ matrix, playerPosition: [nextRowPos, playerPos[1]] });
             setMatrix(newMatrix);
         }, speed);
         const timeoutUp = setTimeout(() => {
-            const nextRowPos = playerPos[0] - 1 > 0 ? (matrix[playerPos[0] - 1][playerPos[1]] === "wall" ? playerPos[0] : playerPos[0] - 1) : 0;
+            const nextRowPos = playerPos[0] - 1 > 0 ? (isWall(matrix[playerPos[0] - 1][playerPos[1]]) ? playerPos[0] : playerPos[0] - 1) : 0;
             setPlayerPos([nextRowPos, playerPos[1]]);
-            const newMatrix = updateMatrix(nextRowPos, playerPos[1]);
+            const newMatrix = updateMatrix({ matrix, playerPosition: [nextRowPos, playerPos[1]] });
             setMatrix(newMatrix);
         }, speed);
         const timeoutLeft = setTimeout(() => {
-            const nextColPos = playerPos[1] - 1 > 0 ? (matrix[playerPos[0]][playerPos[1] - 1] === "wall" ? playerPos[1] : playerPos[1] - 1) : 0;
+            const nextColPos = playerPos[1] - 1 > 0 ? (isWall(matrix[playerPos[0]][playerPos[1] - 1]) ? playerPos[1] : playerPos[1] - 1) : 0;
             setPlayerPos([playerPos[0], nextColPos]);
-            const newMatrix = updateMatrix(playerPos[0], nextColPos);
+            const newMatrix = updateMatrix({ matrix, playerPosition: [playerPos[0], nextColPos] });
             setMatrix(newMatrix);
         }, speed);
         const timeoutRight = setTimeout(() => {
-            const nextColPos = playerPos[1] + 1 < size - 1 ? (matrix[playerPos[0]][playerPos[1] + 1] === "wall" ? playerPos[1] : playerPos[1] + 1) : size - 1;
+            const nextColPos = playerPos[1] + 1 < size - 1 ? (isWall(matrix[playerPos[0]][playerPos[1] + 1]) ? playerPos[1] : playerPos[1] + 1) : size - 1;
             setPlayerPos([playerPos[0], nextColPos]);
-            const newMatrix = updateMatrix(playerPos[0], nextColPos);
+            const newMatrix = updateMatrix({ matrix, playerPosition: [playerPos[0], nextColPos] });
             setMatrix(newMatrix);
         }, speed);
 
@@ -89,36 +87,6 @@ const Matrix = () => {
         arrowUp ? timeoutUp : clearTimeout(timeoutUp);
         arrowLeft ? timeoutLeft : clearTimeout(timeoutLeft);
         arrowRight ? timeoutRight : clearTimeout(timeoutRight);
-
-        // if (arrowDown) {
-        // setTimeout(() => {
-        //     const nextRowPos = playerPos[0] + 1 < size - 1 ? playerPos[0] + 1 : size - 1;
-        //     setPlayerPos([nextRowPos, playerPos[1]]);
-        //     const newMatrix = updateMatrix(nextRowPos, playerPos[1]);
-        //     setMatrix(newMatrix);
-        // }, speed);
-        // if (arrowUp) {
-        //     setTimeout(() => {
-        //         const nextRowPos = playerPos[0] - 1 > 0 ? playerPos[0] - 1 : 0;
-        //         setPlayerPos([nextRowPos, playerPos[1]]);
-        //         const newMatrix = updateMatrix(nextRowPos, playerPos[1]);
-        //         setMatrix(newMatrix);
-        //     }, speed);
-        // } else if (arrowLeft) {
-        //     setTimeout(() => {
-        //         const nextColPos = playerPos[1] - 1 > 0 ? playerPos[1] - 1 : 0;
-        //         setPlayerPos([playerPos[0], nextColPos]);
-        //         const newMatrix = updateMatrix(playerPos[0], nextColPos);
-        //         setMatrix(newMatrix);
-        //     }, speed);
-        // } else if (arrowRight) {
-        //     setTimeout(() => {
-        //         const nextColPos = playerPos[1] + 1 < size - 1 ? playerPos[1] + 1 : size - 1;
-        //         setPlayerPos([playerPos[0], nextColPos]);
-        //         const newMatrix = updateMatrix(playerPos[0], nextColPos);
-        //         setMatrix(newMatrix);
-        //     }, speed);
-        // }
     }, [arrowDown, arrowUp, arrowRight, arrowLeft, playerPos, updateMatrix, size, speed, matrix]);
 
     return (
@@ -126,7 +94,7 @@ const Matrix = () => {
             {matrix.map((row, rowIndex) => (
                 <div style={{ display: "flex", flexDirection: "row" }} key={rowIndex}>
                     {row.map((cell: CellType, cellIndex: number) => (
-                        <Cell cell={cell} key={rowIndex + cellIndex} />
+                        <Cell cell={cell} key={rowIndex + cellIndex} size={size} />
                     ))}
                 </div>
             ))}
