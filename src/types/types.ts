@@ -4,3 +4,4 @@ export type CellType = {
 };
 
 export type MatrixType = CellType[][];
+export type Direction = "up" | "down" | "left" | "right";
