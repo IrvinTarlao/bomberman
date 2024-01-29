@@ -6,12 +6,14 @@ import { MatrixType } from "../types/types";
 type InitialState = {
     matrix: MatrixType;
     playerPosition: number[];
+    playerStatus: "alive" | "dead";
 };
 
 const name = "app";
 const initialState = {
     matrix: [],
     playerPosition: [0, 0],
+    playerStatus: "alive",
 } as InitialState;
 
 const slice = createSlice({
@@ -23,6 +25,9 @@ const slice = createSlice({
         },
         setPlayerPosition: (state, action) => {
             state.playerPosition = action.payload;
+        },
+        setPlayerStatus: (state, action) => {
+            state.playerStatus = action.payload;
         },
     },
 });
