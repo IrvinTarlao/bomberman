@@ -7,6 +7,8 @@ type InitialState = {
     matrix: MatrixType;
     playerPosition: number[];
     playerStatus: "alive" | "dead";
+    playerExplosion: boolean;
+    bombLength: number;
 };
 
 const name = "app";
@@ -14,6 +16,8 @@ const initialState = {
     matrix: [],
     playerPosition: [0, 0],
     playerStatus: "alive",
+    playerExplosion: false,
+    bombLength: 2,
 } as InitialState;
 
 const slice = createSlice({
@@ -28,6 +32,12 @@ const slice = createSlice({
         },
         setPlayerStatus: (state, action) => {
             state.playerStatus = action.payload;
+        },
+        setPlayerExplosion: (state, action) => {
+            state.playerExplosion = action.payload;
+        },
+        setBombLength: (state, action) => {
+            state.bombLength = action.payload;
         },
     },
 });

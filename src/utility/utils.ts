@@ -5,17 +5,18 @@ export const SIZE = 11;
 export const downOrRightLimit = SIZE - 1;
 export const upOrLeftLimit = 0;
 
-export const updateMatrix = ({ matrix, playerPosition, hasBomb = false }: { matrix: MatrixType; playerPosition: number[]; hasBomb?: boolean }) => {
+export const updateMatrix = ({ matrix, playerPosition, hasBomb = false, clearExplosion = false }: { matrix: MatrixType; playerPosition: number[]; hasBomb?: boolean; clearExplosion?: boolean }) => {
     return matrix.map((row: CellType[], rowIndex: number) => {
         return row.map((cell: CellType, cellIndex: number) => {
             //update player position
             if (rowIndex === playerPosition[0] && cellIndex === playerPosition[1]) return { ...cell, status: "player", hasBomb: hasBomb || cell.hasBomb };
             else {
                 // keep first cells empty for initial map
-                if ((rowIndex === 0 && (cellIndex === 0 || cellIndex === 1)) || (rowIndex === 1 && cellIndex === 0) || cell.status === "player") return { ...cell, status: "empty" };
+                if ((rowIndex === 0 && (cellIndex === 0 || cellIndex === 1)) || (rowIndex === 1 && cellIndex === 0) || cell.status === "player")
+                    return { ...cell, status: "empty", explosion: clearExplosion ? null : cell.explosion };
                 // generate walls
                 if (rowIndex % 2 === 1 && cellIndex % 2 === 1) return { ...cell, status: "hardWall" };
-                else return cell;
+                else return { ...cell, explosion: clearExplosion ? null : cell.explosion };
             }
         });
     }) as MatrixType;

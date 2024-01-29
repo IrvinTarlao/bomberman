@@ -14,6 +14,8 @@ const Matrix = () => {
     const matrix = useSelector((state: RootState) => state.app.matrix);
     const playerPosition = useSelector((state: RootState) => state.app.playerPosition);
     const playerStatus = useSelector((state: RootState) => state.app.playerStatus);
+    const playerExplosion = useSelector((state: RootState) => state.app.playerExplosion);
+    const bombLength = useSelector((state: RootState) => state.app.bombLength);
     const [init, setInit] = useState(true);
 
     const initializeMatrix = useCallback(() => {
@@ -43,6 +45,34 @@ const Matrix = () => {
             dispatch(appActions.setMatrix(newMatrix));
         }
     }, [spaceBar, playerPosition, matrix, dispatch]);
+
+    useEffect(() => {
+        if (matrix[playerPosition[0]][playerPosition[1]].modifier === "extraLength") {
+            const newMatrix = matrix.map((row: CellType[], rowIndex: number) =>
+                row.map((cell: CellType, cellIndex: number) => {
+                    if (cell.modifier && rowIndex === playerPosition[0] && cellIndex === playerPosition[1]) return { ...cell, modifier: null };
+                    else return cell;
+                })
+            );
+            dispatch(appActions.setMatrix(newMatrix));
+            dispatch(appActions.setBombLength(bombLength + 1));
+        }
+    }, [playerPosition, matrix, dispatch, bombLength]);
+
+    useEffect(() => {
+        if (playerExplosion) {
+            const newMatrix = matrix.map((row: CellType[], rowIndex: number) =>
+                row.map((cell: CellType, cellIndex: number) => {
+                    if (cell.explosion && rowIndex === playerPosition[0] && cellIndex === playerPosition[1]) dispatch(appActions.setPlayerStatus("dead"));
+                    return { ...cell, explosion: null };
+                })
+            );
+            setTimeout(() => {
+                dispatch(appActions.setMatrix(newMatrix));
+                dispatch(appActions.setPlayerExplosion(false));
+            }, 1000);
+        }
+    }, [playerPosition, matrix, dispatch, playerExplosion]);
 
     useEffect(() => {
         const getNextPosition = ({ currentPosition, nextPosition, limit, direction }: { currentPosition: number; nextPosition: number; limit: number; direction: Direction }) => {
