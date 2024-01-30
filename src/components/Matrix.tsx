@@ -10,17 +10,18 @@ import { SIZE, downOrRightLimit, getNextPositions, isNextPosInsideMatrix, isWall
 const Matrix = () => {
     const dispatch = useDispatch();
 
-    const speed = 200;
     const matrix = useSelector((state: RootState) => state.app.matrix);
     const playerPosition = useSelector((state: RootState) => state.app.playerPosition);
     const playerStatus = useSelector((state: RootState) => state.app.playerStatus);
     const playerExplosion = useSelector((state: RootState) => state.app.playerExplosion);
     const bombLength = useSelector((state: RootState) => state.app.bombLength);
+    const speed = useSelector((state: RootState) => state.app.speed);
+    console.log("🚀 ~ Matrix ~ speed:", speed);
     const [init, setInit] = useState(true);
 
     const initializeMatrix = useCallback(() => {
         const playerPosition = [0, 0];
-        const withWalls = updateMatrix({ matrix: Array(SIZE).fill(Array(SIZE).fill({ status: "softWall", hasBomb: false })), playerPosition });
+        const withWalls = updateMatrix({ matrix: Array(SIZE).fill(Array(SIZE).fill({ status: "softWall", hasBomb: false, modifier: null })), playerPosition, init: true });
         dispatch(appActions.setMatrix(withWalls));
         dispatch(appActions.setPlayerPosition(playerPosition));
         dispatch(appActions.setPlayerStatus("alive"));
@@ -47,17 +48,24 @@ const Matrix = () => {
     }, [spaceBar, playerPosition, matrix, dispatch]);
 
     useEffect(() => {
-        if (matrix[playerPosition[0]][playerPosition[1]].modifier === "extraLength") {
-            const newMatrix = matrix.map((row: CellType[], rowIndex: number) =>
-                row.map((cell: CellType, cellIndex: number) => {
-                    if (cell.modifier && rowIndex === playerPosition[0] && cellIndex === playerPosition[1]) return { ...cell, modifier: null };
-                    else return cell;
-                })
-            );
-            dispatch(appActions.setMatrix(newMatrix));
-            dispatch(appActions.setBombLength(bombLength + 1));
+        if (matrix.length) {
+            const modifier = matrix[playerPosition[0]][playerPosition[1]]?.modifier;
+            if (modifier !== null) {
+                const newMatrix = matrix.map((row: CellType[], rowIndex: number) =>
+                    row.map((cell: CellType, cellIndex: number) => {
+                        if (cell.modifier && rowIndex === playerPosition[0] && cellIndex === playerPosition[1]) return { ...cell, modifier: null };
+                        else return cell;
+                    })
+                );
+                if (modifier === "extraLength") dispatch(appActions.setBombLength(bombLength + 1));
+                if (modifier === "extraSpeed" || modifier === "lowerSpeed") {
+                    const newSpeed = modifier === "extraSpeed" ? speed - 20 : speed + 20;
+                    dispatch(appActions.setSpeed(newSpeed));
+                }
+                dispatch(appActions.setMatrix(newMatrix));
+            }
         }
-    }, [playerPosition, matrix, dispatch, bombLength]);
+    }, [playerPosition, matrix, dispatch, bombLength, speed]);
 
     useEffect(() => {
         if (playerExplosion) {
@@ -77,7 +85,7 @@ const Matrix = () => {
     useEffect(() => {
         const getNextPosition = ({ currentPosition, nextPosition, limit, direction }: { currentPosition: number; nextPosition: number; limit: number; direction: Direction }) => {
             const [rowPos, colPos] = getNextPositions(direction, playerPosition);
-            return isNextPosInsideMatrix(direction, nextPosition) ? (isWall(matrix[rowPos][colPos]) ? currentPosition : nextPosition) : limit;
+            return isNextPosInsideMatrix(nextPosition) ? (isWall(matrix[rowPos][colPos]) ? currentPosition : nextPosition) : limit;
         };
 
         const handleMatrixUpdate = ({ matrix, newPositions }: { matrix: MatrixType; newPositions: number[] }) => {

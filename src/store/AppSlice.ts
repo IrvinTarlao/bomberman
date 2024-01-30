@@ -9,6 +9,7 @@ type InitialState = {
     playerStatus: "alive" | "dead";
     playerExplosion: boolean;
     bombLength: number;
+    speed: number;
 };
 
 const name = "app";
@@ -17,7 +18,8 @@ const initialState = {
     playerPosition: [0, 0],
     playerStatus: "alive",
     playerExplosion: false,
-    bombLength: 2,
+    bombLength: 3,
+    speed: 200,
 } as InitialState;
 
 const slice = createSlice({
@@ -38,6 +40,9 @@ const slice = createSlice({
         },
         setBombLength: (state, action) => {
             state.bombLength = action.payload;
+        },
+        setSpeed: (state, action) => {
+            state.speed = action.payload;
         },
     },
 });
