@@ -57,7 +57,13 @@ const Bomb = ({ position }: { position: number[] }) => {
                         let newCell = { ...cell };
                         nextEmptyCells.map((emptyCell: { shape: "cross" | "horizontal" | "vertical"; coordinates: number[] }) => {
                             if (rowIndex === emptyCell.coordinates[0] && cellIndex === emptyCell.coordinates[1]) {
-                                newCell = { ...cell, status: "empty", hasBomb: false, explosion: emptyCell.shape, modifier: cell.status === "empty" ? null : cell.modifier };
+                                newCell = {
+                                    ...cell,
+                                    status: "empty",
+                                    hasBomb: false,
+                                    explosion: emptyCell.shape,
+                                    modifier: { ...cell.modifier, action: cell.status === "empty" ? null : cell.modifier.action },
+                                };
                             }
                         });
                         return newCell;

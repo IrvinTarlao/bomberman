@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { MatrixType } from "../types/types";
+import { CellType, MatrixType } from "../types/types";
 
 // state
 
@@ -10,6 +10,7 @@ type InitialState = {
     playerExplosion: boolean;
     bombLength: number;
     speed: number;
+    modifiers: CellType["modifier"][];
 };
 
 const name = "app";
@@ -20,6 +21,7 @@ const initialState = {
     playerExplosion: false,
     bombLength: 3,
     speed: 200,
+    modifiers: [],
 } as InitialState;
 
 const slice = createSlice({
@@ -43,6 +45,9 @@ const slice = createSlice({
         },
         setSpeed: (state, action) => {
             state.speed = action.payload;
+        },
+        setModifiers: (state, action) => {
+            state.modifiers = action.payload;
         },
     },
 });

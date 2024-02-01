@@ -1,4 +1,5 @@
 import { CellType, Direction, MatrixType } from "../types/types";
+import { v4 as uuidv4 } from "uuid";
 
 export const HEIGHT = "calc(100vh - 10rem)";
 export const SIZE = 11;
@@ -14,7 +15,7 @@ export const updateMatrix = ({ matrix, playerPosition, hasBomb = false, init = f
                 // keep first cells empty for initial map
                 if ((rowIndex === 0 && (cellIndex === 0 || cellIndex === 1)) || (rowIndex === 1 && cellIndex === 0) || cell.status === "player") return { ...cell, status: "empty" };
                 // generate walls
-                if (rowIndex % 2 === 1 && cellIndex % 2 === 1) return { ...cell, status: "hardWall", modifier: null };
+                if (rowIndex % 2 === 1 && cellIndex % 2 === 1) return { ...cell, status: "hardWall", modifier: { action: null, id: null } };
                 else return { ...cell, modifier: init ? getRandomModifier() : cell.modifier };
             }
         });
@@ -35,11 +36,12 @@ export const getNextPositions = (direction: Direction, position: number[]) => {
 export const isNextPosInsideMatrix = (nextPosition: number) => nextPosition < downOrRightLimit && nextPosition >= upOrLeftLimit;
 
 export const getRandomModifier = () => {
+    const id = uuidv4();
     const blankModifiers = Array(16).fill(null);
     const extraLengthModifiers = Array(4).fill("extraLength");
     const extraSpeedModifiers = Array(4).fill("extraSpeed");
     const lowerSpeedModifiers = Array(1).fill("lowerSpeed");
     const modifiers: CellType["modifier"][] = [...blankModifiers, ...extraSpeedModifiers, ...extraLengthModifiers, ...lowerSpeedModifiers];
     const random = Math.floor(Math.random() * modifiers.length);
-    return modifiers[random];
+    return { action: modifiers[random], id: modifiers[random] !== null ? id : null };
 };
