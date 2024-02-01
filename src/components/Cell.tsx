@@ -10,7 +10,12 @@ const Cell = ({ cell, position }: { cell: CellType; position: number[] }) => {
         softWall: "grey",
     };
     const cellSize = `calc((100vh - 10rem) / ${SIZE})`;
-    // if (cell.explosion) console.log(cell.explosion);
+    const modifiers = {
+        extraLength: "+",
+        extraBomb: "o",
+        extraSpeed: ">>",
+        lowerSpeed: "slow",
+    };
     return (
         <div
             style={{
@@ -28,9 +33,7 @@ const Cell = ({ cell, position }: { cell: CellType; position: number[] }) => {
             {cell.explosion && <div style={{ color: "yellow", fontSize: "2rem" }}>{cell.explosion === "cross" ? "+" : cell.explosion === "horizontal" ? "-" : "|"}</div>}
             {
                 // cell.status === "empty" &&
-                cell?.modifier?.action && !cell.explosion && (
-                    <div style={{ color: "pink", fontSize: "2rem" }}>{cell.modifier.action === "extraLength" ? "o" : cell.modifier.action === "extraSpeed" ? ">>" : "slow"}</div>
-                )
+                cell?.modifier?.action && !cell.explosion && <div style={{ color: "pink", fontSize: "2rem" }}>{modifiers[cell.modifier.action]}</div>
             }
         </div>
     );

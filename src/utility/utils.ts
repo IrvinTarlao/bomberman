@@ -38,10 +38,11 @@ export const isNextPosInsideMatrix = (nextPosition: number) => nextPosition < do
 export const getRandomModifier = () => {
     const id = uuidv4();
     const blankModifiers = Array(16).fill(null);
-    const extraLengthModifiers = Array(4).fill("extraLength");
-    const extraSpeedModifiers = Array(4).fill("extraSpeed");
+    const extraLengthModifiers = Array(3).fill("extraLength");
+    const extraBombModifiers = Array(3).fill("extraBomb");
+    const extraSpeedModifiers = Array(2).fill("extraSpeed");
     const lowerSpeedModifiers = Array(1).fill("lowerSpeed");
-    const modifiers: CellType["modifier"][] = [...blankModifiers, ...extraSpeedModifiers, ...extraLengthModifiers, ...lowerSpeedModifiers];
+    const modifiers: CellType["modifier"][] = [...blankModifiers, ...extraBombModifiers, ...extraSpeedModifiers, ...extraLengthModifiers, ...lowerSpeedModifiers];
     const random = Math.floor(Math.random() * modifiers.length);
     return { action: modifiers[random], id: modifiers[random] !== null ? id : null };
 };

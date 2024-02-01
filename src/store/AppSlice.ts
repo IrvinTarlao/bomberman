@@ -10,6 +10,8 @@ type InitialState = {
     playerExplosion: boolean;
     bombLength: number;
     speed: number;
+    nbOfBombs: number;
+    nbOfBombsPlayed: number;
     modifiers: CellType["modifier"][];
 };
 
@@ -21,6 +23,8 @@ const initialState = {
     playerExplosion: false,
     bombLength: 3,
     speed: 200,
+    nbOfBombs: 1,
+    nbOfBombsPlayed: 0,
     modifiers: [],
 } as InitialState;
 
@@ -48,6 +52,12 @@ const slice = createSlice({
         },
         setModifiers: (state, action) => {
             state.modifiers = action.payload;
+        },
+        setNbOfBombs: (state, action) => {
+            state.nbOfBombs = action.payload;
+        },
+        setNbOfBombsPlayed: (state, action) => {
+            state.nbOfBombsPlayed = action.payload;
         },
     },
 });

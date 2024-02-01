@@ -73,6 +73,7 @@ const Bomb = ({ position }: { position: number[] }) => {
 
             dispatch(appActions.setMatrix(tmpMatrix));
             dispatch(appActions.setPlayerExplosion(true));
+            dispatch(appActions.setNbOfBombsPlayed(0));
         }
     }, [count, dispatch, matrix, position, playerPosition, bombLength]);
     return <div style={{ color: "black", width: "100%", height: "100%", position: "absolute", display: "flex", justifyContent: "center", alignItems: "center" }}>{count}</div>;

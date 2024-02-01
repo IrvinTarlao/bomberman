@@ -16,9 +16,9 @@ const Matrix = () => {
     const playerExplosion = useSelector((state: RootState) => state.app.playerExplosion);
     const bombLength = useSelector((state: RootState) => state.app.bombLength);
     const speed = useSelector((state: RootState) => state.app.speed);
-    console.log("🚀 ~ Matrix ~ speed:", speed);
     const modifiers = useSelector((state: RootState) => state.app.modifiers);
-    console.log("🚀 ~ Matrix ~ modifiers:", modifiers);
+    const nbOfBombs = useSelector((state: RootState) => state.app.nbOfBombs);
+    const nbOfBombsPlayed = useSelector((state: RootState) => state.app.nbOfBombsPlayed);
     const [init, setInit] = useState(true);
 
     const initializeMatrix = useCallback(() => {
@@ -46,11 +46,12 @@ const Matrix = () => {
     const spaceBar = useKeyPress(" ");
 
     useEffect(() => {
-        if (spaceBar && !matrix[playerPosition[0]][playerPosition[1]].hasBomb) {
+        if (spaceBar && !matrix[playerPosition[0]][playerPosition[1]].hasBomb && nbOfBombsPlayed < nbOfBombs) {
+            dispatch(appActions.setNbOfBombsPlayed(nbOfBombsPlayed + 1));
             const newMatrix = updateMatrix({ matrix, playerPosition: playerPosition, hasBomb: true });
             dispatch(appActions.setMatrix(newMatrix));
         }
-    }, [spaceBar, playerPosition, matrix, dispatch]);
+    }, [spaceBar, playerPosition, matrix, dispatch, nbOfBombsPlayed, nbOfBombs]);
 
     useEffect(() => {
         if (matrix.length) {
@@ -65,17 +66,19 @@ const Matrix = () => {
                 );
                 if (action === "extraLength") {
                     dispatch(appActions.setBombLength(bombLength + 1));
-                    dispatch(appActions.setModifiers(nextModifiersState));
+                }
+                if (action === "extraBomb") {
+                    dispatch(appActions.setNbOfBombs(nbOfBombs + 1));
                 }
                 if (action === "extraSpeed" || (action === "lowerSpeed" && modifiers.find((modifier) => modifier.id === id))) {
                     const newSpeed = action === "extraSpeed" ? speed - 20 : speed + 20;
                     dispatch(appActions.setSpeed(newSpeed));
-                    dispatch(appActions.setModifiers(nextModifiersState));
                 }
+                dispatch(appActions.setModifiers(nextModifiersState));
                 dispatch(appActions.setMatrix(newMatrix));
             }
         }
-    }, [playerPosition, matrix, dispatch, bombLength, speed, modifiers]);
+    }, [playerPosition, matrix, dispatch, bombLength, speed, modifiers, nbOfBombs]);
 
     useEffect(() => {
         if (playerExplosion) {
