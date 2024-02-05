@@ -1,10 +1,23 @@
-import { CellType, Direction, MatrixType } from "../types/types";
+import { Dispatch } from "@reduxjs/toolkit";
+import { appActions } from "../store/AppSlice";
+import { CellType, MatrixType } from "../types/types";
 import { v4 as uuidv4 } from "uuid";
 
 export const HEIGHT = "calc(100vh - 10rem)";
 export const SIZE = 11;
 export const downOrRightLimit = SIZE - 1;
 export const upOrLeftLimit = 0;
+
+export const getInitialMatrix = (dispatch: Dispatch) => {
+    const playerPosition = [0, 0];
+    const initialMatrix = updateMatrix({ matrix: Array(SIZE).fill(Array(SIZE).fill({ status: "softWall", hasBomb: false, modifier: { action: null, id: null } })), playerPosition, init: true });
+    const modifiers: object[] = [];
+    initialMatrix.map((row) => row.map((cell) => cell.modifier.id !== null && modifiers.push(cell.modifier)));
+    dispatch(appActions.setMatrix(initialMatrix));
+    dispatch(appActions.setPlayerPosition(playerPosition));
+    dispatch(appActions.setPlayerStatus("alive"));
+    dispatch(appActions.setModifiers(modifiers));
+};
 
 export const updateMatrix = ({ matrix, playerPosition, hasBomb = false, init = false }: { matrix: MatrixType; playerPosition: number[]; hasBomb?: boolean; init?: boolean }) => {
     return matrix.map((row: CellType[], rowIndex: number) => {
@@ -22,19 +35,6 @@ export const updateMatrix = ({ matrix, playerPosition, hasBomb = false, init = f
     }) as MatrixType;
 };
 
-export const isWall = (cell: CellType) => cell.status === "hardWall" || cell.status === "softWall";
-
-export const getNextPositions = (direction: Direction, position: number[]) => {
-    let res: number[] = [];
-    if (direction === "down") res = [position[0] + 1, position[1]];
-    if (direction === "up") res = [position[0] - 1, position[1]];
-    if (direction === "left") res = [position[0], position[1] - 1];
-    if (direction === "right") res = [position[0], position[1] + 1];
-    return res;
-};
-
-export const isNextPosInsideMatrix = (nextPosition: number) => nextPosition < downOrRightLimit && nextPosition >= upOrLeftLimit;
-
 export const getRandomModifier = () => {
     const id = uuidv4();
     const blankModifiers = Array(16).fill(null);
@@ -46,3 +46,5 @@ export const getRandomModifier = () => {
     const random = Math.floor(Math.random() * modifiers.length);
     return { action: modifiers[random], id: modifiers[random] !== null ? id : null };
 };
+
+export const isNextPosInsideMatrix = (nextPosition: number) => nextPosition < downOrRightLimit && nextPosition >= upOrLeftLimit;

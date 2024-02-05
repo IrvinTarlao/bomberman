@@ -1,9 +1,9 @@
-import Matrix from "./components/Matrix";
+import Game from "./components/Game";
 
 function App() {
     return (
         <div style={{ width: "100vw", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-            <Matrix />
+            <Game />
         </div>
     );
 }

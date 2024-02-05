@@ -51,6 +51,7 @@ const Bomb = ({ position }: { position: number[] }) => {
                     }
                 }
 
+                console.log(nextEmptyCells);
                 // update matrix with new empty cells
                 tmpMatrix = matrix.map((row: CellType[], rowIndex: number) => {
                     return row.map((cell: CellType, cellIndex: number) => {
