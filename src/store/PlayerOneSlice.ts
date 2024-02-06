@@ -1,10 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { CellType, MatrixType } from "../types/types";
 
 // state
 
 type InitialState = {
-    matrix: MatrixType;
     playerPosition: number[];
     playerStatus: "alive" | "dead";
     playerExplosion: boolean;
@@ -12,12 +10,10 @@ type InitialState = {
     speed: number;
     nbOfBombs: number;
     nbOfBombsPlayed: number;
-    modifiers: CellType["modifier"][];
 };
 
-const name = "app";
+const name = "playerOne";
 const initialState = {
-    matrix: [],
     playerPosition: [0, 0],
     playerStatus: "alive",
     playerExplosion: false,
@@ -25,16 +21,12 @@ const initialState = {
     speed: 200,
     nbOfBombs: 1,
     nbOfBombsPlayed: 0,
-    modifiers: [],
 } as InitialState;
 
 const slice = createSlice({
     name,
     initialState,
     reducers: {
-        setMatrix: (state, action) => {
-            state.matrix = action.payload;
-        },
         setPlayerPosition: (state, action) => {
             state.playerPosition = action.payload;
         },
@@ -50,22 +42,19 @@ const slice = createSlice({
         setSpeed: (state, action) => {
             state.speed = action.payload;
         },
-        setModifiers: (state, action) => {
-            state.modifiers = action.payload;
-        },
         setNbOfBombs: (state, action) => {
             state.nbOfBombs = action.payload;
         },
         setNbOfBombsPlayed: (state, action) => {
             state.nbOfBombsPlayed = action.payload;
         },
-        setInitialState: (_, action) => {
-            return { ...initialState, matrix: action.payload.matrix, modifiers: action.payload.modifiers };
+        setInitialState: () => {
+            return initialState;
         },
     },
 });
 
 // exports
 
-export const appActions = { ...slice.actions };
-export const appReducer = slice.reducer;
+export const playerOneActions = { ...slice.actions };
+export const playerOneReducer = slice.reducer;

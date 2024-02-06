@@ -1,15 +1,16 @@
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
-import useKeyPress from "../hooks/useKeyPress";
-import { useEffect } from "react";
+import useKeyPress from "./useKeyPress";
+import { useEffect, useState } from "react";
 import { appActions } from "../store/AppSlice";
-import { downOrRightLimit, getNextPositions, isNextPosInsideMatrix, isWall, upOrLeftLimit, updateMatrix } from "../utility/utils";
+import { downOrRightLimit, isNextPosInsideMatrix, upOrLeftLimit, updateMatrix } from "../utility/utils";
 import { CellType, Direction, MatrixType } from "../types/types";
 
-const Player = () => {
+const useUpdatedMatrix = () => {
     const dispatch = useDispatch();
-
     const { matrix, playerPosition, playerExplosion, bombLength, speed, modifiers, nbOfBombs, nbOfBombsPlayed } = useSelector((state: RootState) => state.app);
+
+    const [updatedMatrix, setUpdatedMatrix] = useState<MatrixType>();
 
     const arrowUp = useKeyPress("ArrowUp");
     const arrowDown = useKeyPress("ArrowDown");
@@ -17,58 +18,63 @@ const Player = () => {
     const arrowRight = useKeyPress("ArrowRight");
     const spaceBar = useKeyPress(" ");
 
+    // handle bomb drop
     useEffect(() => {
         if (spaceBar && !matrix[playerPosition[0]][playerPosition[1]].hasBomb && nbOfBombsPlayed < nbOfBombs) {
             dispatch(appActions.setNbOfBombsPlayed(nbOfBombsPlayed + 1));
             const newMatrix = updateMatrix({ matrix, playerPosition: playerPosition, hasBomb: true });
-            dispatch(appActions.setMatrix(newMatrix));
+            setUpdatedMatrix(newMatrix);
         }
     }, [spaceBar, playerPosition, matrix, dispatch, nbOfBombsPlayed, nbOfBombs]);
 
+    //handle modifiers
     useEffect(() => {
         if (matrix.length) {
             const { id, action } = matrix[playerPosition[0]][playerPosition[1]]?.modifier as CellType["modifier"];
-            if (action !== null) {
+            if (action !== null && modifiers.find((modifier) => modifier.id === id)) {
                 const nextModifiersState = modifiers.filter((mod) => mod.id !== id);
-                const newMatrix = matrix.map((row: CellType[], rowIndex: number) =>
-                    row.map((cell: CellType, cellIndex: number) => {
-                        if (cell.modifier.action && rowIndex === playerPosition[0] && cellIndex === playerPosition[1]) return { ...cell, modifier: { ...cell.modifier, action: null } };
-                        else return cell;
-                    })
-                );
+                const newMatrix = updateMatrix({ matrix, playerPosition, dispatch });
+
                 if (action === "extraLength") {
                     dispatch(appActions.setBombLength(bombLength + 1));
                 }
                 if (action === "extraBomb") {
                     dispatch(appActions.setNbOfBombs(nbOfBombs + 1));
                 }
-                if (action === "extraSpeed" || (action === "lowerSpeed" && modifiers.find((modifier) => modifier.id === id))) {
+                if (action === "extraSpeed" || action === "lowerSpeed") {
                     const newSpeed = action === "extraSpeed" ? speed - 20 : speed + 20;
                     dispatch(appActions.setSpeed(newSpeed));
                 }
                 dispatch(appActions.setModifiers(nextModifiersState));
-                dispatch(appActions.setMatrix(newMatrix));
+                setUpdatedMatrix(newMatrix);
             }
         }
     }, [playerPosition, matrix, dispatch, bombLength, speed, modifiers, nbOfBombs]);
 
+    //handle player explosion
     useEffect(() => {
         if (playerExplosion) {
-            const newMatrix = matrix.map((row: CellType[], rowIndex: number) =>
-                row.map((cell: CellType, cellIndex: number) => {
-                    cell.explosion && console.log(cell, rowIndex, cellIndex, playerPosition);
-                    if (cell.explosion && rowIndex === playerPosition[0] && cellIndex === playerPosition[1]) dispatch(appActions.setPlayerStatus("dead"));
-                    return { ...cell, explosion: null };
-                })
-            );
+            const newMatrix = updateMatrix({ matrix, playerPosition, dispatch, playerExplosionEnd: true });
             setTimeout(() => {
-                dispatch(appActions.setMatrix(newMatrix));
+                setUpdatedMatrix(newMatrix);
                 dispatch(appActions.setPlayerExplosion(false));
             }, 1000);
         }
-    }, [playerPosition, matrix, dispatch, playerExplosion, modifiers]);
+    }, [playerPosition, matrix, dispatch, playerExplosion]);
 
+    //handle player position
     useEffect(() => {
+        const isWall = (cell: CellType) => cell.status === "hardWall" || cell.status === "softWall";
+
+        const getNextPositions = (direction: Direction, position: number[]) => {
+            let res: number[] = [];
+            if (direction === "down") res = [position[0] + 1, position[1]];
+            if (direction === "up") res = [position[0] - 1, position[1]];
+            if (direction === "left") res = [position[0], position[1] - 1];
+            if (direction === "right") res = [position[0], position[1] + 1];
+            return res;
+        };
+
         const getNextPosition = ({ currentPosition, nextPosition, limit, direction }: { currentPosition: number; nextPosition: number; limit: number; direction: Direction }) => {
             const [rowPos, colPos] = getNextPositions(direction, playerPosition);
             return isNextPosInsideMatrix(nextPosition) ? (isWall(matrix[rowPos][colPos]) ? currentPosition : nextPosition) : limit;
@@ -77,7 +83,7 @@ const Player = () => {
         const handleMatrixUpdate = ({ matrix, newPositions }: { matrix: MatrixType; newPositions: number[] }) => {
             dispatch(appActions.setPlayerPosition(newPositions));
             const newMatrix = updateMatrix({ matrix, playerPosition: newPositions });
-            dispatch(appActions.setMatrix(newMatrix));
+            setUpdatedMatrix(newMatrix);
         };
 
         const timeoutDown = setTimeout(() => {
@@ -105,7 +111,7 @@ const Player = () => {
         arrowRight ? timeoutRight : clearTimeout(timeoutRight);
     }, [arrowDown, arrowUp, arrowRight, arrowLeft, playerPosition, speed, matrix, dispatch]);
 
-    return null;
+    return updatedMatrix;
 };
 
-export default Player;
+export default useUpdatedMatrix;
