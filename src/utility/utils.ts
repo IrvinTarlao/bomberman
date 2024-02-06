@@ -2,6 +2,7 @@ import { Dispatch } from "@reduxjs/toolkit";
 import { appActions } from "../store/AppSlice";
 import { CellType, MatrixType } from "../types/types";
 import { v4 as uuidv4 } from "uuid";
+import { playerOneActions } from "../store/PlayerOneSlice";
 
 export const HEIGHT = "calc(100vh - 10rem)";
 export const SIZE = 11;
@@ -47,7 +48,7 @@ export const updateMatrix = ({
             //handle explosion
             if (newCell.explosion !== null) {
                 if (rowIndex === playerPosition[0] && cellIndex === playerPosition[1] && dispatch) {
-                    dispatch(appActions.setPlayerStatus("dead"));
+                    dispatch(playerOneActions.setPlayerStatus("dead"));
                 } else newCell = { ...newCell, explosion: playerExplosionEnd ? null : cell.explosion };
             }
 

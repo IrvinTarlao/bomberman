@@ -5,10 +5,12 @@ import { useEffect, useState } from "react";
 import { appActions } from "../store/AppSlice";
 import { downOrRightLimit, isNextPosInsideMatrix, upOrLeftLimit, updateMatrix } from "../utility/utils";
 import { CellType, Direction, MatrixType } from "../types/types";
+import { playerOneActions } from "../store/PlayerOneSlice";
 
 const useUpdatedMatrix = () => {
     const dispatch = useDispatch();
-    const { matrix, playerPosition, playerExplosion, bombLength, speed, modifiers, nbOfBombs, nbOfBombsPlayed } = useSelector((state: RootState) => state.app);
+    const { matrix, modifiers } = useSelector((state: RootState) => state.app);
+    const { playerPosition, playerExplosion, bombLength, speed, nbOfBombs, nbOfBombsPlayed } = useSelector((state: RootState) => state.playerOne);
 
     const [updatedMatrix, setUpdatedMatrix] = useState<MatrixType>();
 
@@ -21,7 +23,7 @@ const useUpdatedMatrix = () => {
     // handle bomb drop
     useEffect(() => {
         if (spaceBar && !matrix[playerPosition[0]][playerPosition[1]].hasBomb && nbOfBombsPlayed < nbOfBombs) {
-            dispatch(appActions.setNbOfBombsPlayed(nbOfBombsPlayed + 1));
+            dispatch(playerOneActions.setNbOfBombsPlayed(nbOfBombsPlayed + 1));
             const newMatrix = updateMatrix({ matrix, playerPosition: playerPosition, hasBomb: true });
             setUpdatedMatrix(newMatrix);
         }
@@ -36,14 +38,14 @@ const useUpdatedMatrix = () => {
                 const newMatrix = updateMatrix({ matrix, playerPosition, dispatch });
 
                 if (action === "extraLength") {
-                    dispatch(appActions.setBombLength(bombLength + 1));
+                    dispatch(playerOneActions.setBombLength(bombLength + 1));
                 }
                 if (action === "extraBomb") {
-                    dispatch(appActions.setNbOfBombs(nbOfBombs + 1));
+                    dispatch(playerOneActions.setNbOfBombs(nbOfBombs + 1));
                 }
                 if (action === "extraSpeed" || action === "lowerSpeed") {
                     const newSpeed = action === "extraSpeed" ? speed - 20 : speed + 20;
-                    dispatch(appActions.setSpeed(newSpeed));
+                    dispatch(playerOneActions.setSpeed(newSpeed));
                 }
                 dispatch(appActions.setModifiers(nextModifiersState));
                 setUpdatedMatrix(newMatrix);
@@ -57,7 +59,7 @@ const useUpdatedMatrix = () => {
             const newMatrix = updateMatrix({ matrix, playerPosition, dispatch, playerExplosionEnd: true });
             setTimeout(() => {
                 setUpdatedMatrix(newMatrix);
-                dispatch(appActions.setPlayerExplosion(false));
+                dispatch(playerOneActions.setPlayerExplosion(false));
             }, 1000);
         }
     }, [playerPosition, matrix, dispatch, playerExplosion]);
@@ -81,7 +83,7 @@ const useUpdatedMatrix = () => {
         };
 
         const handleMatrixUpdate = ({ matrix, newPositions }: { matrix: MatrixType; newPositions: number[] }) => {
-            dispatch(appActions.setPlayerPosition(newPositions));
+            dispatch(playerOneActions.setPlayerPosition(newPositions));
             const newMatrix = updateMatrix({ matrix, playerPosition: newPositions });
             setUpdatedMatrix(newMatrix);
         };

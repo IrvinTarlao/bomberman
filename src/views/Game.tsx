@@ -6,7 +6,7 @@ import Matrix from "../components/Matrix";
 import GameOver from "../components/GameOver";
 
 const Game = () => {
-    const playerStatus = useSelector((state: RootState) => state.app.playerStatus);
+    const playerStatus = useSelector((state: RootState) => state.playerOne.playerStatus);
     const dispatch = useDispatch();
 
     const [init, setInit] = useState(true);
