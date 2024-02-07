@@ -3,5 +3,5 @@
 
 to lauch the project :
 
-# npm install
-# npm run dev
+- npm install
+- npm run dev
