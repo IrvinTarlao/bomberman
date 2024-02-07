@@ -3,9 +3,10 @@ import { RootState } from "../store/store";
 import useKeyPress from "./useKeyPress";
 import { useEffect, useState } from "react";
 import { appActions } from "../store/AppSlice";
-import { downOrRightLimit, isNextPosInsideMatrix, upOrLeftLimit, updateMatrix } from "../utility/utils";
+import { isNextPosInsideMatrix, updateMatrix } from "../utility/utils";
 import { CellType, Direction, MatrixType } from "../types/types";
 import { playerOneActions } from "../store/PlayerOneSlice";
+import { downOrRightLimit, upOrLeftLimit } from "../config/constants";
 
 const useUpdatedMatrix = () => {
     const dispatch = useDispatch();
@@ -24,7 +25,7 @@ const useUpdatedMatrix = () => {
     useEffect(() => {
         if (spaceBar && !matrix[playerPosition[0]][playerPosition[1]].hasBomb && nbOfBombsPlayed < nbOfBombs) {
             dispatch(playerOneActions.setNbOfBombsPlayed(nbOfBombsPlayed + 1));
-            const newMatrix = updateMatrix({ matrix, playerPosition: playerPosition, hasBomb: true });
+            const newMatrix = updateMatrix({ matrix, playerPosition, hasBomb: true });
             setUpdatedMatrix(newMatrix);
         }
     }, [spaceBar, playerPosition, matrix, dispatch, nbOfBombsPlayed, nbOfBombs]);

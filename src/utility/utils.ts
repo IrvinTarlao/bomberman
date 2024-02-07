@@ -1,13 +1,9 @@
 import { Dispatch } from "@reduxjs/toolkit";
 import { appActions } from "../store/AppSlice";
-import { CellType, MatrixType } from "../types/types";
+import { CellInBombRadius, CellType, MatrixType } from "../types/types";
 import { v4 as uuidv4 } from "uuid";
 import { playerOneActions } from "../store/PlayerOneSlice";
-
-export const HEIGHT = "calc(100vh - 10rem)";
-export const SIZE = 11;
-export const downOrRightLimit = SIZE - 1;
-export const upOrLeftLimit = 0;
+import { SIZE, downOrRightLimit, upOrLeftLimit } from "../config/constants";
 
 export const getInitialMatrix = (dispatch: Dispatch) => {
     const playerPosition = [0, 0];
@@ -19,6 +15,7 @@ export const getInitialMatrix = (dispatch: Dispatch) => {
     const modifiers: object[] = [];
     matrix.map((row) => row.map((cell) => cell.modifier.id !== null && modifiers.push(cell.modifier)));
     dispatch(appActions.setInitialState({ matrix, modifiers }));
+    dispatch(playerOneActions.setInitialState());
 };
 
 export const updateMatrix = ({
@@ -27,6 +24,7 @@ export const updateMatrix = ({
     hasBomb = false,
     init = false,
     playerExplosionEnd = false,
+    bombRadius,
     dispatch,
 }: {
     matrix: MatrixType;
@@ -34,22 +32,33 @@ export const updateMatrix = ({
     hasBomb?: boolean;
     init?: boolean;
     playerExplosionEnd?: boolean;
+    bombRadius?: CellInBombRadius[];
     dispatch?: Dispatch;
 }) => {
     return matrix.map((row: CellType[], rowIndex: number) => {
         return row.map((cell: CellType, cellIndex: number) => {
             let newCell = { ...cell, modifier: init ? getRandomModifier() : cell.modifier }; // generate modifiers only on first mount
 
-            //update player position
-            if (rowIndex === playerPosition[0] && cellIndex === playerPosition[1]) {
-                newCell = { ...newCell, status: "player", hasBomb: hasBomb || cell.hasBomb };
-            }
-
             //handle explosion
             if (newCell.explosion !== null) {
                 if (rowIndex === playerPosition[0] && cellIndex === playerPosition[1] && dispatch) {
                     dispatch(playerOneActions.setPlayerStatus("dead"));
                 } else newCell = { ...newCell, explosion: playerExplosionEnd ? null : cell.explosion };
+            }
+
+            //handle bomb radius
+            if (bombRadius) {
+                bombRadius.map((emptyCell: CellInBombRadius) => {
+                    if (rowIndex === emptyCell.coordinates[0] && cellIndex === emptyCell.coordinates[1]) {
+                        newCell = {
+                            ...cell,
+                            status: "empty",
+                            hasBomb: false,
+                            explosion: emptyCell.shape,
+                            modifier: { ...cell.modifier, action: cell.status === "empty" ? null : cell.modifier.action },
+                        };
+                    }
+                });
             }
 
             //handle modifiers catch
@@ -66,7 +75,13 @@ export const updateMatrix = ({
                 newCell = { ...newCell, status: "hardWall", modifier: { action: null, id: null } };
             }
 
-            rowIndex === playerPosition[0] && cellIndex === playerPosition[1] && console.log(playerPosition, [rowIndex, cellIndex]);
+            //update player position
+            if (rowIndex === playerPosition[0] && cellIndex === playerPosition[1]) {
+                newCell = { ...newCell, status: "player", hasBomb: hasBomb || cell.hasBomb };
+            } else {
+                newCell = { ...newCell, status: newCell.status === "player" ? "empty" : newCell.status };
+            }
+
             return newCell;
         });
     }) as MatrixType;
@@ -80,9 +95,8 @@ export const getRandomModifier = () => {
     const extraSpeedModifiers = Array(2).fill("extraSpeed");
     const lowerSpeedModifiers = Array(1).fill("lowerSpeed");
     const modifiers: CellType["modifier"][] = [...blankModifiers, ...extraBombModifiers, ...extraSpeedModifiers, ...extraLengthModifiers, ...lowerSpeedModifiers];
-    const random = Math.floor(Math.random() * modifiers.length);
-    const extraBombModif = Array(50).fill("extraBomb");
-    return { action: extraBombModif[random], id: extraBombModif[random] !== null ? id : null };
+    const randomIndex = Math.floor(Math.random() * modifiers.length);
+    return { action: modifiers[randomIndex], id: modifiers[randomIndex] !== null ? id : null };
 };
 
 export const isNextPosInsideMatrix = (nextPosition: number) => nextPosition < downOrRightLimit && nextPosition >= upOrLeftLimit;

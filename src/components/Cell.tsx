@@ -1,5 +1,5 @@
+import { SIZE } from "../config/constants";
 import { CellType } from "../types/types";
-import { SIZE } from "../utility/utils";
 import Bomb from "./Bomb";
 
 const Cell = ({ cell, position }: { cell: CellType; position: number[] }) => {

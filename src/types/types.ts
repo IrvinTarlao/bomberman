@@ -7,3 +7,4 @@ export type CellType = {
 
 export type MatrixType = CellType[][];
 export type Direction = "up" | "down" | "left" | "right";
+export type CellInBombRadius = { shape: "cross" | "horizontal" | "vertical"; coordinates: number[] };

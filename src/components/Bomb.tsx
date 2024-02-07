@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
 import { appActions } from "../store/AppSlice";
-import { CellType, Direction, MatrixType } from "../types/types";
-import { isNextPosInsideMatrix } from "../utility/utils";
+import { CellInBombRadius, Direction, MatrixType } from "../types/types";
+import { isNextPosInsideMatrix, updateMatrix } from "../utility/utils";
 import { playerOneActions } from "../store/PlayerOneSlice";
 
 const Bomb = ({ position }: { position: number[] }) => {
@@ -22,58 +22,51 @@ const Bomb = ({ position }: { position: number[] }) => {
         } else if (count === 0) {
             let newMatrix: MatrixType = [];
 
-            //positions of cells that will be empty after bomb explosion
-            const nextEmptyCells: { shape: "cross" | "horizontal" | "vertical"; coordinates: number[] }[] = [{ shape: "cross", coordinates: [position[0], position[1]] }];
+            const getBombRadius = () => {
+                const bombRadius: CellInBombRadius[] = [{ shape: "cross", coordinates: [position[0], position[1]] }];
 
-            //determine which cells will be empty after bomb explosion
-            (["up", "down", "left", "right"] as Direction[]).forEach((direction) => {
-                for (let index = 0; index < bombLength; index++) {
-                    let row = position[0];
-                    if (direction === "up") row = row - index;
-                    if (direction === "down") row = row + index;
-                    let col = position[1];
-                    if (direction === "left") col = col - index;
-                    if (direction === "right") col = col + index;
-                    const isInside = [row, col].map((p: number) => isNextPosInsideMatrix(p));
+                //determine which cells will be empty after bomb explosion
+                (["up", "down", "left", "right"] as Direction[]).forEach((direction) => {
+                    for (let index = 0; index < bombLength; index++) {
+                        let row = position[0];
+                        if (direction === "up") row = row - index;
+                        if (direction === "down") row = row + index;
+                        let col = position[1];
+                        if (direction === "left") col = col - index;
+                        if (direction === "right") col = col + index;
 
-                    if (isInside[0] && isInside[1] && !nextEmptyCells.find((cell) => cell.coordinates[0] === row && cell.coordinates[1] === col)) {
-                        const status = matrix[row][col].status;
-                        if (status === "hardWall") break;
-                        else {
-                            nextEmptyCells.push({
-                                shape: row === position[0] && col === position[1] ? "cross" : direction === "up" || direction === "down" ? "vertical" : "horizontal",
-                                coordinates: [row, col],
-                            });
+                        const isInside = [row, col].map((p: number) => isNextPosInsideMatrix(p));
+
+                        if (isInside[0] && isInside[1] && !bombRadius.find((cell) => cell.coordinates[0] === row && cell.coordinates[1] === col)) {
+                            const status = matrix[row][col].status;
+                            if (status === "hardWall") break;
+                            else {
+                                bombRadius.push({
+                                    shape: row === position[0] && col === position[1] ? "cross" : direction === "up" || direction === "down" ? "vertical" : "horizontal",
+                                    coordinates: [row, col],
+                                });
+                                if (status === "softWall") break;
+                            }
                         }
                     }
-                }
-            });
+                });
+
+                return bombRadius;
+            };
+
+            //positions of cells that will be empty after bomb explosion
+            const bombRadius = getBombRadius();
 
             // update matrix with new empty cells
-            newMatrix = matrix.map((row: CellType[], rowIndex: number) => {
-                return row.map((cell: CellType, cellIndex: number) => {
-                    let newCell = { ...cell };
-                    nextEmptyCells.map((emptyCell: { shape: "cross" | "horizontal" | "vertical"; coordinates: number[] }) => {
-                        if (rowIndex === emptyCell.coordinates[0] && cellIndex === emptyCell.coordinates[1]) {
-                            newCell = {
-                                ...cell,
-                                status: "empty",
-                                hasBomb: false,
-                                explosion: emptyCell.shape,
-                                modifier: { ...cell.modifier, action: cell.status === "empty" ? null : cell.modifier.action },
-                            };
-                        }
-                    });
-                    return newCell;
-                });
-            }) as MatrixType;
+            newMatrix = updateMatrix({ matrix, playerPosition, bombRadius });
 
-            //reset states
+            //update states
             dispatch(appActions.setMatrix(newMatrix));
             dispatch(playerOneActions.setPlayerExplosion(true));
             dispatch(playerOneActions.setNbOfBombsPlayed(0));
         }
     }, [count, dispatch, matrix, position, playerPosition, bombLength]);
+
     return <div style={bombStyle}>{count}</div>;
 };
 
