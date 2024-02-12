@@ -1,12 +1,12 @@
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
-import useKeyPress from "./useKeyPress";
 import { useEffect, useState } from "react";
 import { appActions } from "../store/AppSlice";
-import { isNextPosInsideMatrix, updateMatrix } from "../utility/utils";
-import { CellType, Direction, MatrixType } from "../types/types";
+import { isPositionEqual, updateMatrix } from "../utility/utils";
+import { CellType, MatrixType } from "../types/types";
 import { playerOneActions } from "../store/PlayerOneSlice";
-import { downOrRightLimit, upOrLeftLimit } from "../config/constants";
+import usePlayerPosition from "./usePlayerPosition";
+import useBombDrop from "./useBombDrop";
 
 const useUpdatedMatrix = () => {
     const dispatch = useDispatch();
@@ -15,20 +15,17 @@ const useUpdatedMatrix = () => {
 
     const [updatedMatrix, setUpdatedMatrix] = useState<MatrixType>();
 
-    const arrowUp = useKeyPress("ArrowUp");
-    const arrowDown = useKeyPress("ArrowDown");
-    const arrowLeft = useKeyPress("ArrowLeft");
-    const arrowRight = useKeyPress("ArrowRight");
-    const spaceBar = useKeyPress(" ");
+    const isBombDropped = useBombDrop();
+    const nextPlayerPosition = usePlayerPosition();
 
     // handle bomb drop
     useEffect(() => {
-        if (spaceBar && !matrix[playerPosition[0]][playerPosition[1]].hasBomb && nbOfBombsPlayed < nbOfBombs) {
+        if (isBombDropped && !matrix[playerPosition[0]][playerPosition[1]].hasBomb && nbOfBombsPlayed + 1 <= nbOfBombs) {
             dispatch(playerOneActions.setNbOfBombsPlayed(nbOfBombsPlayed + 1));
             const newMatrix = updateMatrix({ matrix, playerPosition, hasBomb: true });
             setUpdatedMatrix(newMatrix);
         }
-    }, [spaceBar, playerPosition, matrix, dispatch, nbOfBombsPlayed, nbOfBombs]);
+    }, [isBombDropped, playerPosition, matrix, dispatch, nbOfBombs, nbOfBombsPlayed]);
 
     //handle modifiers
     useEffect(() => {
@@ -67,52 +64,12 @@ const useUpdatedMatrix = () => {
 
     //handle player position
     useEffect(() => {
-        const isWall = (cell: CellType) => cell.status === "hardWall" || cell.status === "softWall";
-
-        const getNextPositions = (direction: Direction, position: number[]) => {
-            let res: number[] = [];
-            if (direction === "down") res = [position[0] + 1, position[1]];
-            if (direction === "up") res = [position[0] - 1, position[1]];
-            if (direction === "left") res = [position[0], position[1] - 1];
-            if (direction === "right") res = [position[0], position[1] + 1];
-            return res;
-        };
-
-        const getNextPosition = ({ currentPosition, nextPosition, limit, direction }: { currentPosition: number; nextPosition: number; limit: number; direction: Direction }) => {
-            const [rowPos, colPos] = getNextPositions(direction, playerPosition);
-            return isNextPosInsideMatrix(nextPosition) ? (isWall(matrix[rowPos][colPos]) ? currentPosition : nextPosition) : limit;
-        };
-
-        const handleMatrixUpdate = ({ matrix, newPositions }: { matrix: MatrixType; newPositions: number[] }) => {
-            dispatch(playerOneActions.setPlayerPosition(newPositions));
-            const newMatrix = updateMatrix({ matrix, playerPosition: newPositions });
+        if (!isPositionEqual(nextPlayerPosition, playerPosition)) {
+            dispatch(playerOneActions.setPlayerPosition(nextPlayerPosition));
+            const newMatrix = updateMatrix({ matrix, playerPosition: nextPlayerPosition });
             setUpdatedMatrix(newMatrix);
-        };
-
-        const timeoutDown = setTimeout(() => {
-            const nextRowPos = getNextPosition({ currentPosition: playerPosition[0], nextPosition: playerPosition[0] + 1, limit: downOrRightLimit, direction: "down" });
-            handleMatrixUpdate({ matrix, newPositions: [nextRowPos, playerPosition[1]] });
-        }, speed);
-
-        const timeoutUp = setTimeout(() => {
-            const nextRowPos = getNextPosition({ currentPosition: playerPosition[0], nextPosition: playerPosition[0] - 1, limit: upOrLeftLimit, direction: "up" });
-            handleMatrixUpdate({ matrix, newPositions: [nextRowPos, playerPosition[1]] });
-        }, speed);
-
-        const timeoutLeft = setTimeout(() => {
-            const nextColPos = getNextPosition({ currentPosition: playerPosition[1], nextPosition: playerPosition[1] - 1, limit: upOrLeftLimit, direction: "left" });
-            handleMatrixUpdate({ matrix, newPositions: [playerPosition[0], nextColPos] });
-        }, speed);
-        const timeoutRight = setTimeout(() => {
-            const nextColPos = getNextPosition({ currentPosition: playerPosition[1], nextPosition: playerPosition[1] + 1, limit: downOrRightLimit, direction: "right" });
-            handleMatrixUpdate({ matrix, newPositions: [playerPosition[0], nextColPos] });
-        }, speed);
-
-        arrowDown ? timeoutDown : clearTimeout(timeoutDown);
-        arrowUp ? timeoutUp : clearTimeout(timeoutUp);
-        arrowLeft ? timeoutLeft : clearTimeout(timeoutLeft);
-        arrowRight ? timeoutRight : clearTimeout(timeoutRight);
-    }, [arrowDown, arrowUp, arrowRight, arrowLeft, playerPosition, speed, matrix, dispatch]);
+        }
+    }, [nextPlayerPosition, matrix, dispatch, playerPosition]);
 
     return updatedMatrix;
 };

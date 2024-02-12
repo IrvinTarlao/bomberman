@@ -100,3 +100,5 @@ export const getRandomModifier = () => {
 };
 
 export const isNextPosInsideMatrix = (nextPosition: number) => nextPosition < downOrRightLimit && nextPosition >= upOrLeftLimit;
+
+export const isPositionEqual = (array1: number[], array2: number[]) => array1[0] === array2[0] && array1[1] === array2[1];

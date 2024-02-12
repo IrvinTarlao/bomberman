@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 
-const useKeyPress = (targetKey: string) => {
+const useKeyPress = (targetKey: string, unique: boolean = false) => {
     const [keyPressed, setKeyPressed] = useState(false);
+
+    useEffect(() => {
+        if (keyPressed && unique) {
+            setKeyPressed(false);
+        }
+    }, [keyPressed, unique]);
 
     useEffect(() => {
         const downHandler = ({ key }: { key: string }) => {
