@@ -1,4 +1,4 @@
-import { SIZE } from "../config/constants";
+import { SIZE, modifiers } from "../config/constants";
 import { CellType } from "../types/types";
 import Bomb from "./Bomb";
 
@@ -11,13 +11,6 @@ const Cell = ({ cell, position }: { cell: CellType; position: number[] }) => {
     };
 
     const cellSize = `calc((100vh - 10rem) / ${SIZE})`;
-
-    const modifiers = {
-        extraLength: "length",
-        extraBomb: "bomb",
-        extraSpeed: "fast",
-        lowerSpeed: "slow",
-    };
 
     const explosionSymbol = {
         cross: "+",
@@ -38,7 +31,7 @@ const Cell = ({ cell, position }: { cell: CellType; position: number[] }) => {
         <div style={cellStyle}>
             {cell.hasBomb && <Bomb position={position} />}
             {cell.explosion && <div style={{ color: "yellow", fontSize: "2rem" }}>{explosionSymbol[cell.explosion]}</div>}
-            {cell.status === "empty" && cell.modifier.action && !cell.explosion && <div style={{ color: "pink" }}>{modifiers[cell.modifier.action]}</div>}
+            {cell.status === "empty" && cell.modifier.action && !cell.explosion && <div style={{ fontSize: "2rem" }}>{modifiers[cell.modifier.action]}</div>}
         </div>
     );
 };

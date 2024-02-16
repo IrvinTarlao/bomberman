@@ -5,14 +5,14 @@ import { appActions } from "../store/AppSlice";
 import { CellInBombRadius, Direction, MatrixType } from "../types/types";
 import { isNextPosInsideMatrix, updateMatrix } from "../utility/utils";
 import { playerOneActions } from "../store/PlayerOneSlice";
+import { modifiers } from "../config/constants";
+import "../assets/scss/bomb.scss";
 
 const Bomb = ({ position }: { position: number[] }) => {
     const dispatch = useDispatch();
     const [count, setCount] = useState(3); //countdown => bomb explodes at 0
     const matrix = useSelector((state: RootState) => state.app.matrix);
     const { playerPosition, bombLength } = useSelector((state: RootState) => state.playerOne);
-
-    const bombStyle = { color: "black", width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center" };
 
     useEffect(() => {
         if (count > 0) {
@@ -67,7 +67,7 @@ const Bomb = ({ position }: { position: number[] }) => {
         }
     }, [count, dispatch, matrix, position, playerPosition, bombLength]);
 
-    return <div style={bombStyle}>{count}</div>;
+    return <div className="bomb">{modifiers["extraBomb"]}</div>;
 };
 
 export default Bomb;
